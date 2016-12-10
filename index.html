@@ -1,0 +1,123 @@
+<html>
+    <head>
+        <title>WebSocket Echo Client</title>
+    </head>
+    <body>
+        <h1>WebSocket Echo Client</h1>
+        <p>
+            <!-- создаём 3 кнопки и соединяем их с функциями -->
+            <button onClick="initWebSocket();">Connect</button>
+            <button onClick="stopWebSocket();">Disconnect</button>
+            <button onClick="checkSocket();">State</button>
+        </p>
+        <p>
+            <!-- область для вывода информации -->
+            <textarea id="debugTextArea" style="width:400px;height:200px;"></textarea>
+        </p>
+        <p>
+            <!-- область для ввода пользовательской информации -->
+            <!-- при нажатии на Enter также вызовется функция отправки данных -->
+            <input type="text" id="inputText" onkeydown="if(event.keyCode==13)sendMessage();"/>
+            <button onClick="sendMessage();">Send</button>
+        </p>
+
+        <script type="text/javascript">
+            var debugTextArea = document.getElementById("debugTextArea");
+            function debug(message) {
+                // Вывод отладочного сообщения
+                debugTextArea.value += message + "\n";
+                debugTextArea.scrollTop = debugTextArea.scrollHeight;
+            }
+
+            // Отправка сообщения на сервер
+            function sendMessage() {
+                var msg = document.getElementById("inputText").value;
+                // Если сокет создан
+                if ( websocket != null )
+                {
+                    document.getElementById("inputText").value = "";
+                    websocket.send( msg );
+                    console.log( "string sent :", '"'+msg+'"' );
+                }
+            }
+
+            // Адрес сервера (говорим что он на этом же компьютере и номер порта 1234
+            var wsUri = "ws://localhost:1234";
+            var websocket = null;
+
+            // Создание сокета
+            function initWebSocket() {
+                try {
+                    // Это что-то связанное с сокетами старой версии из FireFox,
+                    // по-моему можно убрать
+                    if (typeof MozWebSocket == 'function') {
+                        WebSocket = MozWebSocket;
+                        debug("MozWebSocket");
+                    }
+                    // Если сокет уже создан, то закрыть соединение
+                    if ( websocket && websocket.readyState == 1 )
+                        websocket.close();
+                    // Создать новый сокет с заданным адресом
+                    websocket = new WebSocket( wsUri );
+                    // Если подключиться удасться, то вывести соответствующее сообщение
+                    websocket.onopen = function (evt) {
+                        debug("CONNECTED");
+                    };
+                    // При отключении тоже вывести сообщение
+                    websocket.onclose = function (evt) {
+                        debug("DISCONNECTED");
+                    };
+                    // При получении сообщения вывести его в консоль и область текста
+                    websocket.onmessage = function (evt) {
+                        console.log( "Message received :", evt.data );
+                        debug( evt.data );
+                    };
+                    // При ошибке вывести текст ошибки
+                    websocket.onerror = function (evt) {
+                        debug('ERROR: ' + evt.data);
+                    };
+                } catch (exception) {
+                    debug('ERROR: ' + exception);
+                }
+            }
+
+            // Функция для закрытия веб-сокета
+            function stopWebSocket() {
+                if (websocket)
+                    websocket.close();
+            }
+
+            // Функция для проверки состояния сокета
+            function checkSocket() {
+                if (websocket != null) {
+                    var stateStr;
+                    switch (websocket.readyState) {
+                        case 0: {
+                            stateStr = "CONNECTING";
+                            break;
+                        }
+                        case 1: {
+                            stateStr = "OPEN";
+                            break;
+                        }
+                        case 2: {
+                            stateStr = "CLOSING";
+                            break;
+                        }
+                        case 3: {
+                            stateStr = "CLOSED";
+                            break;
+                        }
+                        default: {
+                            stateStr = "UNKNOW";
+                            break;
+                        }
+                    }
+                    debug("WebSocket state = " + websocket.readyState + " ( " + stateStr + " )");
+                } else {
+                    debug("WebSocket is null");
+                }
+            }
+        </script>
+    </body>
+</html>
