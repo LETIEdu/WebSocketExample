@@ -34,7 +34,7 @@ private slots:
 private:
     // Один объект сервера
     QWebSocketServer *server;
-    // И массив сокетов, один сокет на одного клиента
+    // И список сокетов, один сокет на одного клиента
     QList<QWebSocket *> clients;
 };
 
